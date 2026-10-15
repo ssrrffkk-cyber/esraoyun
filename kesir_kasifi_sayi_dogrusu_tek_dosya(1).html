@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kesir Kaşifi: Sayı Doğrusu Macerası (TYMM 6. Sınıf)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <header class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-black text-indigo-900">Kesir Kaşifi: Sayı Doğrusu Macerası</h1>
+        <p class="text-xs text-slate-500">Türkiye Yüzyılı Maarif Modeli 6. Sınıf Matematik - Tek Dosya Çevrimdışı Sürüm</p>
+      </div>
+      <div class="bg-indigo-50 px-4 py-2 rounded-xl text-indigo-900 font-bold text-sm">
+        Akıllı Tahta Modu
+      </div>
+    </header>
+
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h2 id="story-title" class="text-lg font-bold text-slate-900">1. Bölüm: Doğa Yürüyüşü</h2>
+        <span id="target-label" class="bg-amber-100 text-amber-900 px-3 py-1 rounded-lg text-xs font-bold">Hedef: 7/5</span>
+      </div>
+      <p id="story-desc" class="text-sm text-slate-700 leading-relaxed">
+        Selim parkurda önce 3/5 km yürüdü, sonra 4/5 km daha ilerledi. Sayı doğrusunu 5 eş parçaya bölerek Selim'in vardığı 7/5 noktasını bul!
+      </p>
+
+      <div class="p-4 bg-slate-100 rounded-2xl flex items-center justify-between">
+        <span class="text-sm font-bold">Her 1 Tamı Kaç Eş Parçaya Bölelim?</span>
+        <div class="flex items-center gap-3">
+          <input id="denom-slider" type="range" min="1" max="16" value="5" class="w-48 accent-indigo-600" oninput="updateDenominator(this.value)">
+          <span id="denom-val" class="font-bold text-indigo-700 font-mono text-base">5 Parça (1/5)</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto py-6">
+        <svg id="numberline-svg" width="800" height="180" class="mx-auto block"></svg>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+        <button onclick="step(+1)" class="p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold rounded-xl text-xs border border-indigo-200">+1 Adım İlerle</button>
+        <button onclick="step(-1)" class="p-3 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-xs border border-slate-200">-1 Adım Geri</button>
+        <button onclick="resetPos()" class="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">Sıfırla</button>
+        <button onclick="checkAnswer()" class="p-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">Cevabı Doğrula</button>
+      </div>
+
+      <div id="feedback-box" class="hidden p-4 rounded-2xl text-xs font-bold"></div>
+    </div>
+  </div>
+
+  <script>
+    let denom = 5;
+    let pos = 0;
+    const targetNum = 7;
+    const targetDen = 5;
+
+    function renderLine() {
+      const svg = document.getElementById('numberline-svg');
+      const maxWhole = 3;
+      const totalTicks = maxWhole * denom;
+      const pad = 40;
+      const width = 720;
+      const y = 100;
+
+      let html = '<line x1="' + pad + '" y1="' + y + '" x2="' + (pad + width) + '" y2="' + y + '" stroke="#334155" stroke-width="3" stroke-linecap="round"/>';
+
+      for (let i = 0; i <= totalTicks; i++) {
+        const x = pad + (i / totalTicks) * width;
+        const isWhole = (i % denom === 0);
+        html += '<line x1="' + x + '" y1="' + (isWhole ? y - 16 : y - 8) + '" x2="' + x + '" y2="' + (isWhole ? y + 16 : y + 8) + '" stroke="' + (isWhole ? '#0f172a' : '#94a3b8') + '" stroke-width="' + (isWhole ? 2.5 : 1.5) + '"/>';
+        if (isWhole) {
+          html += '<text x="' + x + '" y="' + (y + 32) + '" text-anchor="middle" font-size="14" font-weight="bold" fill="#0f172a">' + (i / denom) + '</text>';
+        } else {
+          html += '<text x="' + x + '" y="' + (y + 24) + '" text-anchor="middle" font-size="10" fill="#64748b">' + i + '/' + denom + '</text>';
+        }
+      }
+
+      // Draw avatar at pos
+      const curX = pad + (pos / totalTicks) * width;
+      html += '<circle cx="' + curX + '" cy="' + y + '" r="10" fill="#4f46e5" stroke="#ffffff" stroke-width="2"/>';
+      html += '<text x="' + curX + '" y="' + (y - 18) + '" text-anchor="middle" font-size="11" font-weight="bold" fill="#4f46e5">' + pos + '/' + denom + '</text>';
+
+      svg.innerHTML = html;
+    }
+
+    function updateDenominator(val) {
+      denom = parseInt(val);
+      document.getElementById('denom-val').innerText = denom + ' Parça (1/' + denom + ')';
+      renderLine();
+    }
+
+    function step(dir) {
+      pos = Math.max(0, Math.min(3 * denom, pos + dir));
+      renderLine();
+    }
+
+    function resetPos() {
+      pos = 0;
+      renderLine();
+      document.getElementById('feedback-box').className = 'hidden';
+    }
+
+    function checkAnswer() {
+      const fb = document.getElementById('feedback-box');
+      fb.classList.remove('hidden');
+      if (pos * targetDen === targetNum * denom) {
+        fb.className = 'p-4 rounded-2xl bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-sm block';
+        fb.innerText = 'Tebrikler! Sayı doğrusu üzerinde 7/5 noktasına ulaştın. (1 tam 2/5)';
+      } else {
+        fb.className = 'p-4 rounded-2xl bg-amber-100 text-amber-900 border border-amber-300 font-bold text-sm block';
+        fb.innerText = 'Henüz hedefe varamadın! Şu anki konumun ' + pos + '/' + denom + '. Hedef 7/5.';
+      }
+    }
+
+    renderLine();
+  </script>
+</body>
+</html>
